@@ -64,9 +64,9 @@ Rubik.setupCamera = function(camera){
 	camera.near = cameraSetting.near;
 	camera.far = cameraSetting.far;
 
-	camera.position.x = 5;
+	camera.position.x = 6;
 	camera.position.y = 5;
-	camera.position.z = 5;
+	camera.position.z = 6;
 
 	var cubeSetting = this.settings.cube;
 	var focus = cubeSetting.sideLength * cubeSetting.stage / 2;
@@ -121,6 +121,9 @@ Rubik.deploy = function(){
 
 	//initialize interaction
 	_.interaction.initialize();
+
+	var axisHelper = new THREE.AxisHelper( 8 );
+	scene.add( axisHelper );
 
 	//kickoff rendering
 	_.startRendering(renderer, camera, scene);

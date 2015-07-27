@@ -20,9 +20,11 @@ Rubik.interaction = {
 	//coordinates where the detection started
 	'startPoint' : null,
 	//the frames we want to spend on detecting direction
-	'maxDetectingFrame' : 10,
+	'maxDetectingFrame' : 5,
 	//the couter of frames during detection
 	'frameCounter' : 0,
+	//essential information for rotation
+	'rotatingEssentials' : null,
 
 	'initialize' : function(){
 		var _ = this;
@@ -43,6 +45,9 @@ Rubik.interaction = {
 						//the flag is still detecting because the end point may be unvalid
 						_.directionCalc(_.mouse.clone());
 					}
+					break;
+				case 'rotating':
+					_.rotatingHandler();
 					break;
 				default:
 					return false;
@@ -70,7 +75,7 @@ Rubik.interaction = {
 						break;
 					case 'rotating':
 						//check if it is a real rotation
-						_.checkRealRotation();
+						//_.checkRealRotation();
 						break;
 					default:
 						return false;
@@ -102,7 +107,6 @@ Rubik.interaction = {
 			_.slot = intersects[0].object;
 			_.startPoint = _.mouse.clone();
 			_.frameCounter++;
-			_.endPointer = null;
 			//change the flag to detecting
 			_.flag = 'detecting';
 			console.log('Clicked on one cube. Flag: ' + _.flag + '; Slot: ' + _.slot);
@@ -123,6 +127,9 @@ Rubik.interaction = {
 
 	'checkRealRotation' : function(){
 		console.log('checking if it is a valid rotation');
+		var _ = this;
+
+		//reset the flag to idle
 	},
 
 	'directionCalc' : function(coo){
@@ -131,24 +138,65 @@ Rubik.interaction = {
 		//reset the counter anyway
 		_.frameCounter = 0;
 		if(!coo.equals(_.startPoint)){
-			//the end point is valid, change flag from detecting to rotating
-			_.flag = 'rotating';
-			//V2 - V1
+			//V2 - V1, calculate the angle between (0, 1)
 			var direction = coo.sub(_.startPoint).normalize();
 			var angle = - (Math.atan2(direction.y - 1, direction.x) * 360 / Math.PI);
+			var rs = { 'axis' : null, 'clockwise' : null };
 			if(0 < angle && angle < 60){
+				rs.axis = 'x';
+				rs.clockwise = true;
 				console.log('user wants to rotate along with x axis, clockwise');
 			}else if(angle < 120){
+				rs.axis = 'y';
+				rs.clockwise = false;
 				console.log('user wants to rotate along with y axis, counter-clockwise');
 			}else if(angle < 180){
+				rs.axis = 'x';
+				rs.clockwise = false;
 				console.log('user wants to rotate along with x axis, counter-clockwise');
 			}else if(angle < 240){
+				rs.axis = 'z';
+				rs.clockwise = true;
 				console.log('user wants to rotate along with z axis, clockwise');
 			}else if(angle < 300){
+				rs.axis = 'y';
+				rs.clockwise = true;
 				console.log('user wants to rotate along with y axis, clockwise');
 			}else{
+				rs.axis = 'z';
+				rs.clockwise = false;
 				console.log('user wants to rotate along with z axis, counter-clockwise');
 			}
+			//push the result into the parent object
+			_.rotatingEssentials = rs;
+			//change flag from detecting to rotating
+			_.flag = 'rotating';
 		}
+	},
+
+	'rotatingHandler' : function(){
+		var _ = this;
+		console.log('rotating according to the cursor coordinates...');
+		console.log(_.rotatingEssentials);
+	},
+
+	'test' : function(){
+		var _ = this;
+
+		var rotWorldMatrix;
+		// Rotate an object around an arbitrary axis in world space       
+		function rotateAroundWorldAxis(object, axis, radians) {
+		    rotWorldMatrix = new THREE.Matrix4();
+		    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+		    rotWorldMatrix.multiply(object.matrix);                // pre-multiply
+
+		    object.matrix = rotWorldMatrix;
+
+		    object.rotation.setFromRotationMatrix(object.matrix);
+		}
+
+		//rotateAroundWorldAxis(_.slot, new THREE.Vector3(, , 0), - Math.PI / 4);
+		console.log(_.slot.position);
 	}
 }
