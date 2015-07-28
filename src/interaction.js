@@ -118,15 +118,16 @@ Rubik.interaction = {
 		if(intersects.length > 0){
 		//if the cursor is on a cube, then start the interaction
 			//use normal face to find out which direction the start point faces
-			if(intersects[0].face.normal.x === 1){
+			if(Math.abs(intersects[0].face.normal.x) === 1){
 				faceNomal = 'x';
-			}else if(intersects[0].face.normal.y === 1){
+			}else if(Math.abs(intersects[0].face.normal.y) === 1){
 				faceNomal = 'y';
 			}else{
 				faceNomal = 'z';
 			}
 			//push into slot
 			_.slot = { 'obj' : intersects[0].object.clone(), 'facing' :  faceNomal};
+			console.log('the rotation starts from ', _.slot.obj, ', facing ', intersects[0].face.normal, faceNomal);
 			_.startPoint = _.mouse.clone();
 			_.frameCounter++;
 			//change the flag to detecting
@@ -300,7 +301,7 @@ Rubik.interaction = {
 			console.log('valid for conter-clockwise');
 			_.rotationDestination = Math.PI/2;
 		}else{
-			console.log('reset');
+			console.log('not a valid rotation, reset');
 			_.rotationDestination = 0;
 		}
 	},
