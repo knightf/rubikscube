@@ -14,9 +14,9 @@ Rubik.settings = {
 	},
 	'cube' : {
 		'stage' : 3,
-		'sideLength' : 1,
-		'gap' : 0.05,
-		'facet' : [	0xfff000, 0xffff00, 0xffffff, 0x00ffff, 0x0000ff, 0xff00ff ],
+		'sideLength' : 2,
+		'gap' : 0.1,
+		'facet' : [	0x00ff00, 0xffff00, 0xffffff, 0x00ffff, 0x0000ff, 0xff00ff ],
 	},
 	'camera' : [{
 		'fov' : 75,
@@ -47,9 +47,9 @@ Rubik.loadScene = function(scene){
 //load light into the scene
 Rubik.loadLight = function(scene){
 	var light1 = new THREE.PointLight( 0xffffff, 2.5, 100 );
-	light1.position.set( -6, -6, -6 );
+	light1.position.set( -12, -12, -12);
 	var light2 = new THREE.PointLight( 0xffffff, 2.5, 100 );
-	light2.position.set( 6, 6, 6 );
+	light2.position.set( 12, 12, 12 );
 
 	scene.add( light1, light2);
 }
@@ -64,9 +64,9 @@ Rubik.setupCamera = function(camera){
 	camera.near = cameraSetting.near;
 	camera.far = cameraSetting.far;
 
-	camera.position.x = 6;
-	camera.position.y = 5;
-	camera.position.z = 6;
+	camera.position.x = 12;
+	camera.position.y = 10;
+	camera.position.z = 12;
 
 	var cubeSetting = this.settings.cube;
 	var focus = cubeSetting.sideLength * cubeSetting.stage / 2;

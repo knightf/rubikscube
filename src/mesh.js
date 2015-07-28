@@ -27,7 +27,8 @@ Rubik.mesh = {
 				for(j = 0; j < stage; j++){
 					id = k * stage * stage + i * stage + j;
 					cubes[id] = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(meterial));
-					cubes[id].position.set(j + cubeSide / 2, i + cubeSide / 2, k + cubeSide / 2);
+					cubes[id].position.set(j * cubeSetting.sideLength + cubeSide / 2, i * cubeSetting.sideLength + cubeSide / 2, k * cubeSetting.sideLength + cubeSide / 2);
+					cubes[id].name = 'cube';
 				}
 			}
 		}

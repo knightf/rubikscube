@@ -20,11 +20,18 @@ Rubik.interaction = {
 	//coordinates where the detection started
 	'startPoint' : null,
 	//the frames we want to spend on detecting direction
-	'maxDetectingFrame' : 5,
+	'maxDetectingFrame' : 10,
 	//the couter of frames during detection
 	'frameCounter' : 0,
 	//essential information for rotation
-	'rotatingEssentials' : null,
+	'rotatingAxis' : null,
+	'rotatingPivot' : null,
+	'rotatingCubes' : null,
+	//the frames we want to spend on moving cubes to destination
+	'maxRotatingFrame' : 40,
+	//the counter of frames during rotating, the desitination
+	'rotatingCounter' : 0,
+	'rotationDestination' : null,
 
 	'initialize' : function(){
 		var _ = this;
@@ -75,7 +82,7 @@ Rubik.interaction = {
 						break;
 					case 'rotating':
 						//check if it is a real rotation
-						//_.checkRealRotation();
+						_.checkRealRotation();
 						break;
 					default:
 						return false;
@@ -91,6 +98,12 @@ Rubik.interaction = {
 
 		//stick the ray to cursor
 		rc.setFromCamera( mouse, camera );
+
+		//if it is in ending phase, play the animation
+	
+		if(_.flag === 'ending')
+			_.rotateAnimate();
+		
 	},
 
 	'pushClickedCube' : function(){
@@ -98,13 +111,22 @@ Rubik.interaction = {
 			rc = _.raycaster,
 			mouse = _.mouse,
 			scene = _.scene,
-			obj;
+			obj, faceNormal;
 
 		var intersects = rc.intersectObjects(scene.children);
 		//mouse on the cube
 		if(intersects.length > 0){
 		//if the cursor is on a cube, then start the interaction
-			_.slot = intersects[0].object;
+			//use normal face to find out which direction the start point faces
+			if(intersects[0].face.normal.x === 1){
+				faceNomal = 'x';
+			}else if(intersects[0].face.normal.y === 1){
+				faceNomal = 'y';
+			}else{
+				faceNomal = 'z';
+			}
+			//push into slot
+			_.slot = { 'obj' : intersects[0].object.clone(), 'facing' :  faceNomal};
 			_.startPoint = _.mouse.clone();
 			_.frameCounter++;
 			//change the flag to detecting
@@ -125,78 +147,248 @@ Rubik.interaction = {
 		console.log('Interaction aborted during detection. Flag: ' + _.flag + '; Slot: ' + _.slot);
 	},
 
-	'checkRealRotation' : function(){
-		console.log('checking if it is a valid rotation');
-		var _ = this;
-
-		//reset the flag to idle
-	},
-
 	'directionCalc' : function(coo){
-		var _ = this;
+		var _ = this, angle;
+		var baseXZ = new THREE.Vector2(1, 1).normalize();
+		var baseY = new THREE.Vector2(0, 1);
 
 		//reset the counter anyway
 		_.frameCounter = 0;
+		//valid point
 		if(!coo.equals(_.startPoint)){
-			//V2 - V1, calculate the angle between (0, 1)
+			//V2 - V1, calculate the angle between normalized (1, 1)
 			var direction = coo.sub(_.startPoint).normalize();
-			var angle = - (Math.atan2(direction.y - 1, direction.x) * 360 / Math.PI);
-			var rs = { 'axis' : null, 'clockwise' : null };
-			if(0 < angle && angle < 60){
-				rs.axis = 'x';
-				rs.clockwise = true;
-				console.log('user wants to rotate along with x axis, clockwise');
-			}else if(angle < 120){
-				rs.axis = 'y';
-				rs.clockwise = false;
-				console.log('user wants to rotate along with y axis, counter-clockwise');
-			}else if(angle < 180){
-				rs.axis = 'x';
-				rs.clockwise = false;
-				console.log('user wants to rotate along with x axis, counter-clockwise');
-			}else if(angle < 240){
-				rs.axis = 'z';
-				rs.clockwise = true;
-				console.log('user wants to rotate along with z axis, clockwise');
-			}else if(angle < 300){
-				rs.axis = 'y';
-				rs.clockwise = true;
-				console.log('user wants to rotate along with y axis, clockwise');
+			
+			var rs = null;
+			if(_.slot.facing === 'x'){
+				angle = (Math.atan2(baseXZ.y, baseXZ.x) - Math.atan2(direction.y, direction.x))*180/Math.PI;
+				if( ((-90 < angle) && (angle < 0)) || ((90 < angle) && (angle < 180)) ){
+					rs = 'z';
+				}else{
+					rs = 'y';
+				}
+			}else if(_.slot.facing === 'y'){
+				angle = (Math.atan2(baseY.y, baseY.x) - Math.atan2(direction.y, direction.x))*180/Math.PI;
+				if( ((-90 < angle) && (angle < 0)) || ((90 < angle) && (angle < 180)) ){
+					rs = 'z';
+				}else{
+					rs = 'x';
+				}				
 			}else{
-				rs.axis = 'z';
-				rs.clockwise = false;
-				console.log('user wants to rotate along with z axis, counter-clockwise');
+				//facing z
+				angle = (Math.atan2(baseXZ.y, baseXZ.x) - Math.atan2(direction.y, direction.x))*180/Math.PI;
+				if( ((-90 < angle) && (angle < 0)) || ((90 < angle) && (angle < 180)) ){
+					rs = 'x';
+				}else{
+					rs = 'y';
+				}				
 			}
 			//push the result into the parent object
-			_.rotatingEssentials = rs;
-			//change flag from detecting to rotating
-			_.flag = 'rotating';
+			_.rotatingAxis = rs;
+			//make the start point the real start point
+			_.startPoint = coo;
+			//do the prepration for rotating
+			_.prepareRotating();
 		}
+	},
+
+	'prepareRotating' : function(){
+		var _ = this,
+			scene = Rubik.scene,
+			cubeSetting = Rubik.settings.cube,
+			centerPoint = (cubeSetting.stage * cubeSetting.sideLength - cubeSetting.gap) / 2;
+
+		_.rotatingPivot = new THREE.Object3D();
+
+		//find the right position of the pivot
+		if(_.rotatingAxis === 'x'){
+			var pivotX = _.slot.obj.position.x;
+			var pivotY = centerPoint;
+			var pivotZ = pivotY;
+		}else if(_.rotatingAxis === 'y'){
+			var pivotX = centerPoint;
+			var pivotY = _.slot.obj.position.y;
+			var pivotZ = pivotX;
+		}else{
+			//rotating on z axis
+			var pivotX = centerPoint;
+			var pivotY = pivotX;
+			var pivotZ = _.slot.obj.position.z;
+		}
+		_.rotatingPivot.position.x = pivotX;
+		_.rotatingPivot.position.y = pivotY;
+		_.rotatingPivot.position.z = pivotZ;
+		console.log('pivot is at x:' + _.rotatingPivot.position.x + ', y:' + _.rotatingPivot.position.y + ', z: ' + _.rotatingPivot.position.z);
+
+		//attach pivot to the scene
+		scene.add(_.rotatingPivot);
+		_.rotatingPivot.updateMatrixWorld();
+		_.rotatingPivot.rotation.set(0, 0, 0);
+
+		//find all the cubes needs to be rotated
+		_.rotatingCubes = _.getRotatingCubes(_.rotatingAxis, _.slot.obj, scene);
+		console.log('these cubes need to be rotated:');
+		console.log(_.rotatingCubes);
+		//attach them to the pivot
+		for(var i = 0; i < _.rotatingCubes.length; i++)
+			THREE.SceneUtils.attach( _.rotatingCubes[i], scene, _.rotatingPivot );
+
+		//all done, change flag from detecting to rotating
+		_.flag = 'rotating';
+	},
+
+	'getRotatingCubes' : function(axis, obj, scene){
+		var cubes = [],
+			target;
+
+		target = obj.position[axis];
+		for(var i = 0; i < scene.children.length; i++){
+			if( (Math.abs(scene.children[i].position[axis] - target) < 0.1) && (scene.children[i].name === 'cube'))
+				cubes.push(scene.children[i]);
+		}
+		console.log('there are the cubes to be rotated: ', cubes);
+		return cubes;
 	},
 
 	'rotatingHandler' : function(){
-		var _ = this;
-		console.log('rotating according to the cursor coordinates...');
-		console.log(_.rotatingEssentials);
+		var _ = this,
+			camera = Rubik.cameras.camera0,
+			axis = _.rotatingAxis;
+
+		console.log('rotating, the axis is ' + _.rotatingAxis);
+
+		//calculate the angle
+		var projectedPivotLocation = _.rotatingPivot.position.clone().project(camera);
+		var pivotVector2 = new THREE.Vector2(projectedPivotLocation.x, projectedPivotLocation.y);
+		var baseVector = _.startPoint.sub(pivotVector2);
+		var currentVector = _.mouse.sub(pivotVector2);
+
+		var angle = Math.atan2(currentVector.y, currentVector.x) - Math.atan2(baseVector.y, baseVector.x);
+		var angle = Math.atan2(currentVector.y, currentVector.x) - Math.atan2(0, 0);
+		if(angle < -Math.PI)
+			angle += 2 * Math.PI;
+
+		
+		if((-Math.PI/2 < angle) && (angle < Math.PI/2)){
+			if(Math.abs(angle - _.rotatingPivot.rotation[axis]) < Math.PI/2 ){
+				if(axis === 'x'){
+					_.rotatingPivot.rotation.set(angle, 0, 0);
+				}else if(axis === 'y'){
+					_.rotatingPivot.rotation.set(0, angle, 0);
+				}else if(axis === 'z'){
+					_.rotatingPivot.rotation.set(0, 0, angle);
+				}
+			}
+		}
+		
 	},
 
-	'test' : function(){
-		var _ = this;
 
-		var rotWorldMatrix;
-		// Rotate an object around an arbitrary axis in world space       
-		function rotateAroundWorldAxis(object, axis, radians) {
-		    rotWorldMatrix = new THREE.Matrix4();
-		    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+	'checkRealRotation' : function(){
+		var _ = this,
+			axis = _.rotatingAxis,
+			scene = Rubik.scene;
 
-		    rotWorldMatrix.multiply(object.matrix);                // pre-multiply
+		console.log('checking if it is a valid rotation');
+		console.log(_.rotatingPivot.rotation);
+		_.flag = ('ending');
 
-		    object.matrix = rotWorldMatrix;
+		if(_.rotatingPivot.rotation[axis] + Math.PI / 2  < Math.PI / 3){
+			console.log('valid for clockwise');
+			_.rotationDestination = -Math.PI/2;
+		}else if(Math.PI / 2 - _.rotatingPivot.rotation[axis] < Math.PI / 3){
+			console.log('valid for conter-clockwise');
+			_.rotationDestination = Math.PI/2;
+		}else{
+			console.log('reset');
+			_.rotationDestination = 0;
+		}
+	},
 
-		    object.rotation.setFromRotationMatrix(object.matrix);
+	'rotateAnimate' : function(){
+		var _ = this,
+			step = Math.PI / 80;
+			axis = _.rotatingAxis;
+			radians = _.rotationDestination;
+
+		if(_.rotatingPivot === null)
+			return false;
+
+		if((Math.abs(_.rotatingPivot.rotation[axis] - radians) <= step) || (_.rotatingCounter >= _.maxRotatingFrame)){
+			//the animation reaches its end, because what is left is less then a step or because the frame limit
+			console.log('animation needs to end, it is becuase smaller then step? ' + (Math.abs(_.rotatingPivot.rotation[axis] - radians) <= step) + '; or reaching the maximum frame? ' + (_.rotatingCounter >= _.maxRotatingFrame));
+			if(axis === 'x'){
+				_.rotatingPivot.rotation.set(radians, 0, 0);
+			}else if(axis === 'y'){
+				_.rotatingPivot.rotation.set(0, radians, 0);
+			}else if(axis === 'z'){
+				_.rotatingPivot.rotation.set(0, 0, radians);
+			}
+			//release cubes
+			_.releaseCubes();
+		}else{
+			console.log('doing the animation');
+			//animate
+			//if desination - current > 0, then the rotation needs to get greater
+			if((_.rotationDestination - _.rotatingPivot.rotation[axis]) > 0){
+				if(axis === 'x'){
+					_.rotatingPivot.rotation.set(_.rotatingPivot.rotation[axis] + step, 0, 0);
+				}else if(axis === 'y'){
+					_.rotatingPivot.rotation.set(0, _.rotatingPivot.rotation[axis] + step, 0);
+				}else if(axis === 'z'){
+					_.rotatingPivot.rotation.set(0, 0, _.rotatingPivot.rotation[axis] + step);
+				}
+			}else{
+			//else it needs to get smaller
+				if(axis === 'x'){
+					_.rotatingPivot.rotation.set(_.rotatingPivot.rotation[axis] - step, 0, 0);
+				}else if(axis === 'y'){
+					_.rotatingPivot.rotation.set(0, _.rotatingPivot.rotation[axis] - step, 0);
+				}else if(axis === 'z'){
+					_.rotatingPivot.rotation.set(0, 0, _.rotatingPivot.rotation[axis] - step);
+				}
+			}
 		}
 
-		//rotateAroundWorldAxis(_.slot, new THREE.Vector3(, , 0), - Math.PI / 4);
-		console.log(_.slot.position);
-	}
+		_.rotatingCounter++;
+	},
+
+	'releaseCubes' : function(){
+		var _ = this,
+			axis = _.rotatingAxis,
+			scene = Rubik.scene;
+
+		console.log('cleaning up...');
+		console.log(_.rotatingPivot.rotation);
+
+		_.rotatingPivot.updateMatrixWorld();
+		//all cleared up, release the cubes from the pivot
+		for(var i = 0; i < _.rotatingCubes.length; i++){
+    		THREE.SceneUtils.detach( _.rotatingCubes[i], _.rotatingPivot, scene );
+    		_.rotatingCubes[i].updateMatrixWorld();
+    	}
+    	//remove the pivot
+		scene.remove(_.rotatingPivot);
+
+		//clear cache, get ready for next rotation
+		_.rotatingPivot = null;
+		_.rotatingCounter = 0;
+		_.rotationDestination = null;
+		//reset the flag to idle
+		_.flag = 'idle';
+	},
 }
+
+/*
+var rotWorldMatrix;
+// Rotate an object around an arbitrary axis in world space       
+function rotateAroundWorldAxis(object, axis, radians) {
+    rotWorldMatrix = new THREE.Matrix4();
+    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+    rotWorldMatrix.multiply(object.matrix);                // pre-multiply
+    object.matrix = rotWorldMatrix;
+
+    object.rotation.setFromRotationMatrix(object.matrix);
+}
+*/

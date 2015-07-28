@@ -1,0 +1,23 @@
+{
+  "name": "rubikscube",
+  "version": "1.0.0",
+  "description": "a Rubik's cube with threejs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/knightf/rubikscube.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/knightf/rubikscube/issues"
+  },
+  "homepage": "https://github.com/knightf/rubikscube#readme",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-wiredep": "^2.0.0"
+  }
+}
