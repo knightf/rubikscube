@@ -20,15 +20,15 @@ Rubik.interaction = {
 	//coordinates where the detection started
 	'startPoint' : null,
 	//the frames we want to spend on detecting direction
-	'maxDetectingFrame' : 10,
+	'maxDetectingFrame' : 8,
 	//the couter of frames during detection
 	'frameCounter' : 0,
 	//essential information for rotation
 	'rotatingAxis' : null,
 	'rotatingPivot' : null,
 	'rotatingCubes' : null,
-	//the frames we want to spend on moving cubes to destination
-	'maxRotatingFrame' : 40,
+	'baseAtan2' : null,
+	'pivotVector2' : null,
 	//the counter of frames during rotating, the desitination
 	'rotatingCounter' : 0,
 	'rotationDestination' : null,
@@ -111,28 +111,32 @@ Rubik.interaction = {
 			rc = _.raycaster,
 			mouse = _.mouse,
 			scene = _.scene,
-			obj, faceNormal;
+			obj, normalVector, faceNormal;
 
 		var intersects = rc.intersectObjects(scene.children);
 		//mouse on the cube
 		if(intersects.length > 0){
 		//if the cursor is on a cube, then start the interaction
 			//use normal face to find out which direction the start point faces
-			if(Math.abs(intersects[0].face.normal.x) === 1){
+			normalVector = intersects[0].face.normal.clone();
+			normalVector.applyEuler(intersects[0].object.rotation).normalize().round();
+			if(normalVector.x === 1){
 				faceNomal = 'x';
-			}else if(Math.abs(intersects[0].face.normal.y) === 1){
+			}else if(normalVector.y === 1){
 				faceNomal = 'y';
-			}else{
+			}else if(normalVector.z === 1){
 				faceNomal = 'z';
 			}
 			//push into slot
 			_.slot = { 'obj' : intersects[0].object.clone(), 'facing' :  faceNomal};
-			console.log('the rotation starts from ', _.slot.obj, ', facing ', intersects[0].face.normal, faceNomal);
+			console.log('%cthe rotation starts with this cube:', 'background: red; color: white', _.slot.obj);
+			console.log('%crotated normal vector is ', 'background: yellow; color black', normalVector);
+			console.log('%cthe program think it\'s facing ', 'background: yellow; color black', faceNomal);
 			_.startPoint = _.mouse.clone();
 			_.frameCounter++;
 			//change the flag to detecting
 			_.flag = 'detecting';
-			console.log('Clicked on one cube. Flag: ' + _.flag + '; Slot: ' + _.slot);
+			console.log('%cflag is detecting now', 'background: yellow; color: black');
 		}
 	},
 
@@ -141,11 +145,12 @@ Rubik.interaction = {
 
 		//reset the flag, start point and frame counter
 		_.flag = 'idle';
+		console.log('%cinteraction aborted during detection. flag is idle now', 'background: yellow; color: black');
+
 		_.startPoint = null;
 		_.frameCounter = 0;
 		//clear the slot
 		_.slot = null;
-		console.log('Interaction aborted during detection. Flag: ' + _.flag + '; Slot: ' + _.slot);
 	},
 
 	'directionCalc' : function(coo){
@@ -186,8 +191,6 @@ Rubik.interaction = {
 			}
 			//push the result into the parent object
 			_.rotatingAxis = rs;
-			//make the start point the real start point
-			_.startPoint = coo;
 			//do the prepration for rotating
 			_.prepareRotating();
 		}
@@ -197,7 +200,8 @@ Rubik.interaction = {
 		var _ = this,
 			scene = Rubik.scene,
 			cubeSetting = Rubik.settings.cube,
-			centerPoint = (cubeSetting.stage * cubeSetting.sideLength - cubeSetting.gap) / 2;
+			centerPoint = (cubeSetting.stage * cubeSetting.sideLength - cubeSetting.gap) / 2,
+			camera = Rubik.cameras.camera0;
 
 		_.rotatingPivot = new THREE.Object3D();
 
@@ -219,7 +223,7 @@ Rubik.interaction = {
 		_.rotatingPivot.position.x = pivotX;
 		_.rotatingPivot.position.y = pivotY;
 		_.rotatingPivot.position.z = pivotZ;
-		console.log('pivot is at x:' + _.rotatingPivot.position.x + ', y:' + _.rotatingPivot.position.y + ', z: ' + _.rotatingPivot.position.z);
+		console.log('%cpivot is at:', 'background: blue; color: cyan', _.rotatingPivot.position);
 
 		//attach pivot to the scene
 		scene.add(_.rotatingPivot);
@@ -228,14 +232,19 @@ Rubik.interaction = {
 
 		//find all the cubes needs to be rotated
 		_.rotatingCubes = _.getRotatingCubes(_.rotatingAxis, _.slot.obj, scene);
-		console.log('these cubes need to be rotated:');
-		console.log(_.rotatingCubes);
 		//attach them to the pivot
 		for(var i = 0; i < _.rotatingCubes.length; i++)
 			THREE.SceneUtils.attach( _.rotatingCubes[i], scene, _.rotatingPivot );
 
+		//calculate the base atan2 for later radian calculation
+		var projectedPivotLocation = _.rotatingPivot.position.clone().project(camera);
+		_.pivotVector2 = new THREE.Vector2(projectedPivotLocation.x, projectedPivotLocation.y);
+		var baseVector = _.startPoint.clone().sub(_.pivotVector2);
+		_.baseAtan2 = Math.atan2(baseVector.y, baseVector.x);
+
 		//all done, change flag from detecting to rotating
 		_.flag = 'rotating';
+		console.log('%cflag is rotating now', 'background: yellow; color: black');
 	},
 
 	'getRotatingCubes' : function(axis, obj, scene){
@@ -247,28 +256,23 @@ Rubik.interaction = {
 			if( (Math.abs(scene.children[i].position[axis] - target) < 0.1) && (scene.children[i].name === 'cube'))
 				cubes.push(scene.children[i]);
 		}
-		console.log('there are the cubes to be rotated: ', cubes);
+		console.log('%cthere are the cubes to be rotated: ', 'background: blue; color: cyan', cubes);
 		return cubes;
 	},
 
 	'rotatingHandler' : function(){
 		var _ = this,
-			camera = Rubik.cameras.camera0,
 			axis = _.rotatingAxis;
 
-		console.log('rotating, the axis is ' + _.rotatingAxis);
+		console.log('%crotating around', 'color: #bbb', _.rotatingAxis);
 
-		//calculate the angle
-		var projectedPivotLocation = _.rotatingPivot.position.clone().project(camera);
-		var pivotVector2 = new THREE.Vector2(projectedPivotLocation.x, projectedPivotLocation.y);
-		var baseVector = _.startPoint.sub(pivotVector2);
-		var currentVector = _.mouse.sub(pivotVector2);
-
-		var angle = Math.atan2(currentVector.y, currentVector.x) - Math.atan2(baseVector.y, baseVector.x);
-		var angle = Math.atan2(currentVector.y, currentVector.x) - Math.atan2(0, 0);
+		var currentVector = _.mouse.clone().sub(_.pivotVector2);
+		var angle = Math.atan2(currentVector.y, currentVector.x) - _.baseAtan2;
+		//make angle in -pi/2 to pi/2
 		if(angle < -Math.PI)
-			angle += 2 * Math.PI;
-
+			angle += Math.PI * 2;
+		if(angle > Math.PI)
+			angle -= Math.PI * 2;
 		
 		if((-Math.PI/2 < angle) && (angle < Math.PI/2)){
 			if(Math.abs(angle - _.rotatingPivot.rotation[axis]) < Math.PI/2 ){
@@ -290,18 +294,19 @@ Rubik.interaction = {
 			axis = _.rotatingAxis,
 			scene = Rubik.scene;
 
-		console.log('checking if it is a valid rotation');
-		console.log(_.rotatingPivot.rotation);
+		console.log('%cchecking if it is a valid rotation', 'background: green; color: white');
+		//console.log(_.rotatingPivot.rotation);
 		_.flag = ('ending');
+		console.log('%cflag is ending now', 'background: yellow; color: black');
 
 		if(_.rotatingPivot.rotation[axis] + Math.PI / 2  < Math.PI / 3){
-			console.log('valid for clockwise');
+			console.log('%cvalid for clockwise', 'background: green; color: white');
 			_.rotationDestination = -Math.PI/2;
 		}else if(Math.PI / 2 - _.rotatingPivot.rotation[axis] < Math.PI / 3){
-			console.log('valid for conter-clockwise');
+			console.log('%cvalid for conter-clockwise', 'background: green; color: white');
 			_.rotationDestination = Math.PI/2;
 		}else{
-			console.log('not a valid rotation, reset');
+			console.log('%cnot a valid rotation, reset', 'color: green');
 			_.rotationDestination = 0;
 		}
 	},
@@ -315,9 +320,8 @@ Rubik.interaction = {
 		if(_.rotatingPivot === null)
 			return false;
 
-		if((Math.abs(_.rotatingPivot.rotation[axis] - radians) <= step) || (_.rotatingCounter >= _.maxRotatingFrame)){
+		if(Math.abs(_.rotatingPivot.rotation[axis] - radians) <= step){
 			//the animation reaches its end, because what is left is less then a step or because the frame limit
-			console.log('animation needs to end, it is becuase smaller then step? ' + (Math.abs(_.rotatingPivot.rotation[axis] - radians) <= step) + '; or reaching the maximum frame? ' + (_.rotatingCounter >= _.maxRotatingFrame));
 			if(axis === 'x'){
 				_.rotatingPivot.rotation.set(radians, 0, 0);
 			}else if(axis === 'y'){
@@ -328,7 +332,7 @@ Rubik.interaction = {
 			//release cubes
 			_.releaseCubes();
 		}else{
-			console.log('doing the animation');
+			console.log('%cdoing the animation', 'color: #bbb');
 			//animate
 			//if desination - current > 0, then the rotation needs to get greater
 			if((_.rotationDestination - _.rotatingPivot.rotation[axis]) > 0){
@@ -359,8 +363,8 @@ Rubik.interaction = {
 			axis = _.rotatingAxis,
 			scene = Rubik.scene;
 
-		console.log('cleaning up...');
-		console.log(_.rotatingPivot.rotation);
+		console.log('%ccleaning up...', 'background: red; color: white');
+		//console.log(_.rotatingPivot.rotation);
 
 		_.rotatingPivot.updateMatrixWorld();
 		//all cleared up, release the cubes from the pivot
@@ -377,6 +381,7 @@ Rubik.interaction = {
 		_.rotationDestination = null;
 		//reset the flag to idle
 		_.flag = 'idle';
+		console.log('%cflag is idle now', 'background: yellow; color: black');
 	},
 }
 
