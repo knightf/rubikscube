@@ -14,13 +14,13 @@ Rubik.interaction = {
 	//the vector that stores cursor's coordinates
 	'mouse' : new THREE.Vector2(),
 	//the flag
-	'flag' : 'idle',
+	'flag' : null,
 	//current focused cube
 	'slot' : null,
 	//coordinates where the detection started
 	'startPoint' : null,
 	//the frames we want to spend on detecting direction
-	'maxDetectingFrame' : 8,
+	'maxDetectingFrame' : 4,
 	//the couter of frames during detection
 	'frameCounter' : 0,
 	//essential information for rotation
@@ -36,6 +36,9 @@ Rubik.interaction = {
 	'initialize' : function(){
 		var _ = this;
 
+		//random the cube first
+		Rubik.toolbox.random();
+
 		//sync mouse vector with the cursor
 		document.addEventListener( 'mousemove', function(){
 			//do these following no matter what the flag is
@@ -50,11 +53,11 @@ Rubik.interaction = {
 					}else{
 						//detection done, analyse the information
 						//the flag is still detecting because the end point may be unvalid
-						_.directionCalc(_.mouse.clone());
+						_.directionCalc(_, _.mouse.clone());
 					}
 					break;
 				case 'rotating':
-					_.rotatingHandler();
+					_.rotatingHandler(_);
 					break;
 				default:
 					return false;
@@ -67,7 +70,7 @@ Rubik.interaction = {
 				//only react to the left button
 				if(_.flag === 'idle')
 					//the cube is idle, start the interaction
-					_.pushClickedCube();
+					_.pushClickedCube(_);
 			}
 		}, false);
 
@@ -78,11 +81,11 @@ Rubik.interaction = {
 				switch(_.flag){
 					case 'detecting':
 						//abort, when the flag is detecting
-						_.abortDetection();
+						_.abortDetection(_);
 						break;
 					case 'rotating':
 						//check if it is a real rotation
-						_.checkRealRotation();
+						_.checkRealRotation(_);
 						break;
 					default:
 						return false;
@@ -102,13 +105,12 @@ Rubik.interaction = {
 		//if it is in ending phase, play the animation
 	
 		if(_.flag === 'ending')
-			_.rotateAnimate();
+			_.rotateAnimate(_);
 		
 	},
 
-	'pushClickedCube' : function(){
-		var _ = this,
-			rc = _.raycaster,
+	'pushClickedCube' : function(_){
+		var rc = _.raycaster,
 			mouse = _.mouse,
 			scene = _.scene,
 			obj, normalVector, faceNormal;
@@ -140,9 +142,7 @@ Rubik.interaction = {
 		}
 	},
 
-	'abortDetection' : function(){
-		var _ = this;
-
+	'abortDetection' : function(_){
 		//reset the flag, start point and frame counter
 		_.flag = 'idle';
 		console.log('%cinteraction aborted during detection. flag is idle now', 'background: yellow; color: black');
@@ -153,8 +153,8 @@ Rubik.interaction = {
 		_.slot = null;
 	},
 
-	'directionCalc' : function(coo){
-		var _ = this, angle;
+	'directionCalc' : function(_, coo){
+		var angle;
 		var baseXZ = new THREE.Vector2(1, 1).normalize();
 		var baseY = new THREE.Vector2(0, 1);
 
@@ -192,13 +192,12 @@ Rubik.interaction = {
 			//push the result into the parent object
 			_.rotatingAxis = rs;
 			//do the prepration for rotating
-			_.prepareRotating();
+			_.prepareRotating(_);
 		}
 	},
 
-	'prepareRotating' : function(){
-		var _ = this,
-			scene = Rubik.scene,
+	'prepareRotating' : function(_){
+		var scene = Rubik.scene,
 			cubeSetting = Rubik.settings.cube,
 			centerPoint = (cubeSetting.stage * cubeSetting.sideLength - cubeSetting.gap) / 2,
 			camera = Rubik.cameras.camera0;
@@ -260,9 +259,8 @@ Rubik.interaction = {
 		return cubes;
 	},
 
-	'rotatingHandler' : function(){
-		var _ = this,
-			axis = _.rotatingAxis;
+	'rotatingHandler' : function(_){
+		var axis = _.rotatingAxis;
 
 		console.log('%crotating around', 'color: #bbb', _.rotatingAxis);
 
@@ -288,10 +286,8 @@ Rubik.interaction = {
 		
 	},
 
-
-	'checkRealRotation' : function(){
-		var _ = this,
-			axis = _.rotatingAxis,
+	'checkRealRotation' : function(_){
+		var axis = _.rotatingAxis,
 			scene = Rubik.scene;
 
 		console.log('%cchecking if it is a valid rotation', 'background: green; color: white');
@@ -311,9 +307,8 @@ Rubik.interaction = {
 		}
 	},
 
-	'rotateAnimate' : function(){
-		var _ = this,
-			step = Math.PI / 80;
+	'rotateAnimate' : function(_){
+		var step = Math.PI / 80;
 			axis = _.rotatingAxis;
 			radians = _.rotationDestination;
 
@@ -330,9 +325,9 @@ Rubik.interaction = {
 				_.rotatingPivot.rotation.set(0, 0, radians);
 			}
 			//release cubes
-			_.releaseCubes();
+			_.releaseCubes(_);
 		}else{
-			console.log('%cdoing the animation', 'color: #bbb');
+			console.log('%cdoing the rest of animation', 'color: #bbb');
 			//animate
 			//if desination - current > 0, then the rotation needs to get greater
 			if((_.rotationDestination - _.rotatingPivot.rotation[axis]) > 0){
@@ -358,9 +353,8 @@ Rubik.interaction = {
 		_.rotatingCounter++;
 	},
 
-	'releaseCubes' : function(){
-		var _ = this,
-			axis = _.rotatingAxis,
+	'releaseCubes' : function(_){
+		var axis = _.rotatingAxis,
 			scene = Rubik.scene;
 
 		console.log('%ccleaning up...', 'background: red; color: white');

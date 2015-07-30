@@ -36,6 +36,9 @@ Rubik.cameras = {
 	'camera0' : new THREE.PerspectiveCamera(),
 }
 
+//interface
+Rubik.interfaceState = 'waiting';
+
 //load mesh into the scene
 Rubik.loadScene = function(scene){
 	//load cubes in
@@ -78,9 +81,25 @@ Rubik.setupCamera = function(camera){
 //animate up
 Rubik.frameUpdate = function(scene, camera){
 	var _ = Rubik;
-	
+
 	//start the interact ticking
 	_.interaction.tick(camera, scene);
+
+	//start the interface ticking only when the cube is ready (randomized)
+	if(_.interaction.flag === 'idle'){
+		switch(_.interfaceState){
+			case 'wholeY':
+				break;
+			case 'wholeX':
+				break;
+			case 'wholeZ':
+				break;
+			case 'waiting':
+				break;
+			default:
+				return;
+		}
+	}
 }
 
 //the function to trigger the rendering
