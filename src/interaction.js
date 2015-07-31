@@ -31,13 +31,14 @@ Rubik.interaction = {
 	'pivotVector2' : null,
 	//the counter of frames during rotating, the desitination
 	'rotatingCounter' : 0,
+	'rotatingStep' : Math.PI / 80,
 	'rotationDestination' : null,
 
 	'initialize' : function(){
 		var _ = this;
 
 		//random the cube first
-		Rubik.toolbox.random();
+		Rubik.interface.setFlag('randoming');
 
 		//sync mouse vector with the cursor
 		document.addEventListener( 'mousemove', function(){
@@ -308,7 +309,7 @@ Rubik.interaction = {
 	},
 
 	'rotateAnimate' : function(_){
-		var step = Math.PI / 80;
+		var step = _.rotatingStep;
 			axis = _.rotatingAxis;
 			radians = _.rotationDestination;
 
@@ -371,6 +372,8 @@ Rubik.interaction = {
 
 		//clear cache, get ready for next rotation
 		_.rotatingPivot = null;
+		_.rotatingAxis = null;
+		_.rotatingCubes = null;
 		_.rotatingCounter = 0;
 		_.rotationDestination = null;
 		//reset the flag to idle

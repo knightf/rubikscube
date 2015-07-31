@@ -81,18 +81,24 @@ Rubik.setupCamera = function(camera){
 //animate up
 Rubik.frameUpdate = function(scene, camera){
 	var _ = Rubik;
+	
+	if(_.interface.flag === 'randoming')
+		_.interface.randomTick();
 
 	//start the interact ticking
 	_.interaction.tick(camera, scene);
 
 	//start the interface ticking only when the cube is ready (randomized)
 	if(_.interaction.flag === 'idle'){
-		switch(_.interfaceState){
+		switch(_.interface.flag){
 			case 'wholeY':
+				_.interface.wholeTick('y', scene);
 				break;
 			case 'wholeX':
+				_.interface.wholeTick('x', scene);
 				break;
 			case 'wholeZ':
+				_.interface.wholeTick('z', scene);
 				break;
 			case 'waiting':
 				break;
