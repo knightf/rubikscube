@@ -13,7 +13,7 @@ Rubik.interface = {
 	'rotatingCubes' : null,
 	'rotatingAxis' : null,
 	'rotationDestination' : Math.PI / 2,
-	'rotatingStep' : Math.PI / 20,
+	'rotatingStep' : Math.PI / 15,
 
 	'randomTimes' : 1,
 	'randomCounter' : 0,
