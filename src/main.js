@@ -49,12 +49,9 @@ Rubik.loadScene = function(scene){
 
 //load light into the scene
 Rubik.loadLight = function(scene){
-	var light1 = new THREE.PointLight( 0xffffff, 2.5, 100 );
-	light1.position.set( -12, -12, -12);
-	var light2 = new THREE.PointLight( 0xffffff, 2.5, 100 );
-	light2.position.set( 12, 12, 12 );
-
-	scene.add( light1, light2);
+	var light = new THREE.PointLight( 0xfefff0, 2.4, 100 );
+	light.position.set( 12, 12, 12 );
+	scene.add( light );
 }
 
 //set up camera
@@ -81,9 +78,9 @@ Rubik.setupCamera = function(camera){
 //animate up
 Rubik.frameUpdate = function(scene, camera){
 	var _ = Rubik;
-	
+
 	if(_.interface.flag === 'randoming')
-		_.interface.randomTick();
+		_.interface.randomTick(scene);
 
 	//start the interact ticking
 	_.interaction.tick(camera, scene);
@@ -99,8 +96,6 @@ Rubik.frameUpdate = function(scene, camera){
 				break;
 			case 'wholeZ':
 				_.interface.wholeTick('z', scene);
-				break;
-			case 'waiting':
 				break;
 			default:
 				return;
@@ -144,13 +139,14 @@ Rubik.deploy = function(){
 	//get camera ready in scene
 	_.setupCamera(camera);
 
-	//initialize interaction
-	_.interaction.initialize();
-
 	var axisHelper = new THREE.AxisHelper( 8 );
 	scene.add( axisHelper );
 
 	//kickoff rendering
 	_.startRendering(renderer, camera, scene);
+
+	//initialize interaction
+	_.interaction.initialize(camera);
+
 }
 

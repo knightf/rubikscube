@@ -15,7 +15,7 @@ Rubik.interface = {
 	'rotationDestination' : Math.PI / 2,
 	'rotatingStep' : Math.PI / 15,
 
-	'randomTimes' : 1,
+	'randomTimes' : 24,
 	'randomCounter' : 0,
 
 	'setFlag' : function(newFlag){
@@ -27,22 +27,43 @@ Rubik.interface = {
 	},
 
 	//function that randomly rotates one level
-	'randomTick' : function(){
-		var _ = this;
+	'randomTick' : function(scene){
+		var _ = this,
+			cubeSetting = Rubik.settings.cube,
+			arr = [ 'x', 'y', 'z' ],
+			level, diff,
+			centerPoint = (cubeSetting.stage * cubeSetting.sideLength - cubeSetting.gap) / 2;
 
-		//if the counter < maxtimes and it is not animating, do the random
-		if(_.randomCounter < _.randomTimes){
-			//call for a random
-			//add counter up
+		//it is waiting for another random
+		if(_.rotatingPivot === null){
+			//prepare for a random, random an axis and a level
+			_.rotatingAxis = arr[ Math.floor((Math.random() * 3)) ];
+			level = Math.floor( Math.random() * cubeSetting.stage );
+			console.log('randomed axis is ', _.rotatingAxis, ' at level ', level);
+
+			_.rotatingPivot = new THREE.Object3D();
+			diff = cubeSetting.sideLength * level + ( cubeSetting.sideLength - cubeSetting.gap ) / 2;
+			//find the right position of the pivot
+			_.rotatingPivot.position.x = _.rotatingPivot.position.y = _.rotatingPivot.position.z = centerPoint;
+			_.rotatingPivot.position[_.rotatingAxis] = diff;
+			console.log('%cpivot is at:', 'background: blue; color: cyan', _.rotatingPivot.position);
+
+			//attach pivot to the scene
+			scene.add(_.rotatingPivot);
+			_.rotatingPivot.updateMatrixWorld();
+			_.rotatingPivot.rotation.set(0, 0, 0);
+
+			//find all the cubes needs to be rotated
+			_.rotatingCubes = Rubik.interaction.getRotatingCubes(_.rotatingAxis, _.rotatingPivot, scene);
+			//attach them to the pivot
+			for(var i = 0; i < _.rotatingCubes.length; i++)
+				THREE.SceneUtils.attach( _.rotatingCubes[i], scene, _.rotatingPivot );
+
 			_.randomCounter++;
 			console.log('randoming for the ' + _.randomCounter + ' time.');
-		}else{
-			//reset the flag
-			_.setFlag('reset');
-			//initialize the interaction flag
-			Rubik.interaction.flag = 'idle';
-			console.log('%cstart to listen for user\'s interactions', 'color: red');
-		}	
+		}
+		//tick
+		Rubik.interaction.rotateAnimate(_);	
 	},
 
 	//function that rotates the whole cube
@@ -56,7 +77,7 @@ Rubik.interface = {
 			_.rotatingPivot = new THREE.Object3D();
 			//set the position
 			_.rotatingPivot.position.x = _.rotatingPivot.position.y = _.rotatingPivot.position.z = centerPoint;
-			console.log(_.rotatingPivot.position);
+			//console.log(_.rotatingPivot.position);
 			//attach pivot to the scene
 			scene.add(_.rotatingPivot);
 			_.rotatingPivot.updateMatrixWorld();
@@ -105,8 +126,16 @@ Rubik.interface = {
 		_.rotatingPivot = null;
 		_.rotatingAxis = null;
 		_.rotatingCubes = null;
-		//reset the flag to idle
-		_.setFlag('reset');
-		console.log('%cflag is wating now', 'background: yellow; color: black');
+
+		if( (_.flag === 'randoming') && (_.randomCounter < _.randomTimes) ){
+			//random is a special case
+			return;
+		}else{
+			//reset the flag
+			_.setFlag('reset');
+			console.log('%cflag is wating now', 'background: yellow; color: black');
+			//set interaction to idle
+			Rubik.interaction.flag = 'idle';
+		}
 	},
 }

@@ -20,7 +20,7 @@ Rubik.interaction = {
 	//coordinates where the detection started
 	'startPoint' : null,
 	//the frames we want to spend on detecting direction
-	'maxDetectingFrame' : 4,
+	'maxDetectingFrame' : 5,
 	//the couter of frames during detection
 	'frameCounter' : 0,
 	//essential information for rotation
@@ -30,18 +30,18 @@ Rubik.interaction = {
 	'baseAtan2' : null,
 	'pivotVector2' : null,
 	//the counter of frames during rotating, the desitination
-	'rotatingCounter' : 0,
 	'rotatingStep' : Math.PI / 80,
 	'rotationDestination' : null,
 
-	'initialize' : function(){
+	'initialize' : function(camera){
 		var _ = this;
 
 		//random the cube first
 		Rubik.interface.setFlag('randoming');
 
+		var canvas = Rubik.renderer.domElement;
 		//sync mouse vector with the cursor
-		document.addEventListener( 'mousemove', function(){
+		canvas.addEventListener( 'mousemove', function(event){
 			//do these following no matter what the flag is
 			event.preventDefault();
 			_.mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -65,8 +65,49 @@ Rubik.interaction = {
 			}
 		}, false );
 
+		canvas.addEventListener( 'touchmove', function(event){
+			if ( event.touches.length === 1 ) {
+				event.preventDefault();
+				_.mouse.x = ( event.touches[ 0 ].pageX / window.innerWidth ) * 2 - 1;
+				_.mouse.y = - ( event.touches[ 0 ].pageY / window.innerHeight ) * 2 + 1;
+
+				switch(_.flag){
+				case 'detecting':
+					if(_.frameCounter < _.maxDetectingFrame){
+						//detection not done yet
+						_.frameCounter++;
+					}else{
+						//detection done, analyse the information
+						//the flag is still detecting because the end point may be unvalid
+						_.directionCalc(_, _.mouse.clone());
+					}
+					break;
+				case 'rotating':
+					_.rotatingHandler(_);
+					break;
+				default:
+					return false;
+				}
+			}
+		});
+
+
+		canvas.addEventListener( 'touchstart', function(event){
+			if ( event.touches.length === 1 ) {
+				event.preventDefault();
+				_.mouse.x = ( event.touches[ 0 ].pageX / window.innerWidth ) * 2 - 1;
+				_.mouse.y = - ( event.touches[ 0 ].pageY / window.innerHeight ) * 2 + 1;
+				//stick the ray to cursor
+				_.raycaster.setFromCamera( _.mouse, camera );
+				//the cube is idle, start the interaction
+				if(_.flag === 'idle')
+					_.pushClickedCube(_);
+			}
+		});
+
+
 		//mousedown event
-		document.addEventListener( 'mousedown', function(event){
+		canvas.addEventListener( 'mousedown', function(event){
 			if(event.which === 1){
 				//only react to the left button
 				if(_.flag === 'idle')
@@ -76,7 +117,7 @@ Rubik.interaction = {
 		}, false);
 
 		//mouseup event
-		document.addEventListener( 'mouseup', function(event){
+		canvas.addEventListener( 'mouseup', function(event){
 			if(event.which === 1){
 				//only react to the left button
 				switch(_.flag){
@@ -93,6 +134,21 @@ Rubik.interaction = {
 				}
 			}
 		}, false);
+
+		canvas.addEventListener( 'touchend', function(event){
+			switch(_.flag){
+				case 'detecting':
+					//abort, when the flag is detecting
+					_.abortDetection(_);
+					break;
+				case 'rotating':
+					//check if it is a real rotation
+					_.checkRealRotation(_);
+					break;
+				default:
+					return false;
+			}
+		});
 	},
 
 	'tick' : function(camera, scene){
@@ -206,23 +262,8 @@ Rubik.interaction = {
 		_.rotatingPivot = new THREE.Object3D();
 
 		//find the right position of the pivot
-		if(_.rotatingAxis === 'x'){
-			var pivotX = _.slot.obj.position.x;
-			var pivotY = centerPoint;
-			var pivotZ = pivotY;
-		}else if(_.rotatingAxis === 'y'){
-			var pivotX = centerPoint;
-			var pivotY = _.slot.obj.position.y;
-			var pivotZ = pivotX;
-		}else{
-			//rotating on z axis
-			var pivotX = centerPoint;
-			var pivotY = pivotX;
-			var pivotZ = _.slot.obj.position.z;
-		}
-		_.rotatingPivot.position.x = pivotX;
-		_.rotatingPivot.position.y = pivotY;
-		_.rotatingPivot.position.z = pivotZ;
+		_.rotatingPivot.position.x = _.rotatingPivot.position.y = _.rotatingPivot.position.z = centerPoint;
+		_.rotatingPivot.position[_.rotatingAxis] = _.slot.obj.position[_.rotatingAxis];
 		console.log('%cpivot is at:', 'background: blue; color: cyan', _.rotatingPivot.position);
 
 		//attach pivot to the scene
@@ -329,6 +370,7 @@ Rubik.interaction = {
 			_.releaseCubes(_);
 		}else{
 			console.log('%cdoing the rest of animation', 'color: #bbb');
+
 			//animate
 			//if desination - current > 0, then the rotation needs to get greater
 			if((_.rotationDestination - _.rotatingPivot.rotation[axis]) > 0){
@@ -350,8 +392,6 @@ Rubik.interaction = {
 				}
 			}
 		}
-
-		_.rotatingCounter++;
 	},
 
 	'releaseCubes' : function(_){
@@ -374,7 +414,6 @@ Rubik.interaction = {
 		_.rotatingPivot = null;
 		_.rotatingAxis = null;
 		_.rotatingCubes = null;
-		_.rotatingCounter = 0;
 		_.rotationDestination = null;
 		//reset the flag to idle
 		_.flag = 'idle';
