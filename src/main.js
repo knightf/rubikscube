@@ -16,7 +16,13 @@ Rubik.settings = {
 		'stage' : 3,
 		'sideLength' : 2,
 		'gap' : 0.1,
-		'facet' : [	0x00ff00, 0xffff00, 0xffffff, 0x00ffff, 0x0000ff, 0xff00ff ],
+		'facet' : [
+			THREE.ImageUtils.loadTexture( './images/blue.jpg' ),
+			THREE.ImageUtils.loadTexture( './images/green.jpg' ),
+			THREE.ImageUtils.loadTexture( './images/orange.jpg' ),
+			THREE.ImageUtils.loadTexture( './images/pink.jpg' ),
+			THREE.ImageUtils.loadTexture( './images/red.jpg' ),
+		],
 	},
 	'camera' : [{
 		'fov' : 75,
@@ -139,8 +145,8 @@ Rubik.deploy = function(){
 	//get camera ready in scene
 	_.setupCamera(camera);
 
-	var axisHelper = new THREE.AxisHelper( 8 );
-	scene.add( axisHelper );
+	//var axisHelper = new THREE.AxisHelper( 8 );
+	//scene.add( axisHelper );
 
 	//kickoff rendering
 	_.startRendering(renderer, camera, scene);

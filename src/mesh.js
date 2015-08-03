@@ -13,11 +13,54 @@ Rubik.mesh = {
 
 		var geometry = new THREE.BoxGeometry( cubeSide, cubeSide, cubeSide );
 
-		var meterial = [];
-		var facet = cubeSetting.facet;
+		var repo = [],
+			facet = cubeSetting.facet;
+
 		for(var i = 0; i < facet.length; i++){
-			meterial.push( new THREE.MeshPhongMaterial({ color: facet[i] }) );
+			repo.push( new THREE.MeshLambertMaterial({
+       			ambient: 0xffffff,
+        		map: facet[i],
+        	}) );
 		}
+		repo.push( new THREE.MeshLambertMaterial({ color: 0xffffff }) );
+
+		var meterial = [
+			[ repo[5], repo[1], repo[5], repo[3], repo[5], repo[5] ],
+			[ repo[5], repo[5], repo[5], repo[3], repo[5], repo[5] ],
+			[ repo[0], repo[5], repo[5], repo[3], repo[5], repo[5] ],
+
+			[ repo[5], repo[1], repo[5], repo[5], repo[5], repo[5] ],
+			[ repo[5], repo[5], repo[5], repo[5], repo[5], repo[5] ],
+			[ repo[0], repo[5], repo[5], repo[5], repo[5], repo[5] ],
+
+			[ repo[5], repo[1], repo[2], repo[5], repo[5], repo[5] ],
+			[ repo[5], repo[5], repo[2], repo[5], repo[5], repo[5] ],
+			[ repo[0], repo[5], repo[2], repo[5], repo[5], repo[5] ],
+
+			[ repo[5], repo[1], repo[5], repo[3], repo[5], repo[5] ],
+			[ repo[5], repo[5], repo[5], repo[3], repo[5], repo[5] ],
+			[ repo[0], repo[5], repo[5], repo[3], repo[5], repo[5] ],
+
+			[ repo[5], repo[1], repo[5], repo[5], repo[5], repo[5] ],
+			[ repo[5], repo[5], repo[5], repo[5], repo[5], repo[5] ],
+			[ repo[0], repo[5], repo[5], repo[5], repo[5], repo[5] ],
+
+			[ repo[5], repo[1], repo[2], repo[5], repo[5], repo[5] ],
+			[ repo[5], repo[5], repo[2], repo[5], repo[5], repo[5] ],
+			[ repo[0], repo[5], repo[2], repo[5], repo[5], repo[5] ],
+
+			[ repo[5], repo[1], repo[5], repo[3], repo[4], repo[5] ],
+			[ repo[5], repo[5], repo[5], repo[3], repo[4], repo[5] ],
+			[ repo[0], repo[5], repo[5], repo[3], repo[4], repo[5] ],
+
+			[ repo[5], repo[1], repo[5], repo[5], repo[4], repo[5] ],
+			[ repo[5], repo[5], repo[5], repo[5], repo[4], repo[5] ],
+			[ repo[0], repo[5], repo[5], repo[5], repo[4], repo[5] ],
+
+			[ repo[5], repo[1], repo[2], repo[5], repo[4], repo[5] ],
+			[ repo[5], repo[5], repo[2], repo[5], repo[4], repo[5] ],
+			[ repo[0], repo[5], repo[2], repo[5], repo[4], repo[5] ],
+		];
 
 		var cubes = [],
 			stage = cubeSetting.stage,
@@ -26,7 +69,7 @@ Rubik.mesh = {
 			for(i = 0; i < stage; i++){
 				for(j = 0; j < stage; j++){
 					id = k * stage * stage + i * stage + j;
-					cubes[id] = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(meterial));
+					cubes[id] = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(meterial[ id ]));
 					cubes[id].position.set(j * cubeSetting.sideLength + cubeSide / 2, i * cubeSetting.sideLength + cubeSide / 2, k * cubeSetting.sideLength + cubeSide / 2);
 					cubes[id].name = 'cube';
 				}

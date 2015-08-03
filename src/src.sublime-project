@@ -3,6 +3,9 @@
 	[
 		{
 			"path": "/home/eric/www/rubikscube"
+		},
+		{
+			"path": "."
 		}
 	]
 }

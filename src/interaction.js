@@ -40,58 +40,37 @@ Rubik.interaction = {
 		Rubik.interface.setFlag('randoming');
 
 		var canvas = Rubik.renderer.domElement;
+
 		//sync mouse vector with the cursor
 		canvas.addEventListener( 'mousemove', function(event){
 			//do these following no matter what the flag is
 			event.preventDefault();
 			_.mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 			_.mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-			switch(_.flag){
-				case 'detecting':
-					if(_.frameCounter < _.maxDetectingFrame){
-						//detection not done yet
-						_.frameCounter++;
-					}else{
-						//detection done, analyse the information
-						//the flag is still detecting because the end point may be unvalid
-						_.directionCalc(_, _.mouse.clone());
-					}
-					break;
-				case 'rotating':
-					_.rotatingHandler(_);
-					break;
-				default:
-					return false;
-			}
+			Rubik.domEvents.onMouseMove(_);
 		}, false );
 
+		//sync mouse vector on touch screen
 		canvas.addEventListener( 'touchmove', function(event){
 			if ( event.touches.length === 1 ) {
 				event.preventDefault();
 				_.mouse.x = ( event.touches[ 0 ].pageX / window.innerWidth ) * 2 - 1;
 				_.mouse.y = - ( event.touches[ 0 ].pageY / window.innerHeight ) * 2 + 1;
-
-				switch(_.flag){
-				case 'detecting':
-					if(_.frameCounter < _.maxDetectingFrame){
-						//detection not done yet
-						_.frameCounter++;
-					}else{
-						//detection done, analyse the information
-						//the flag is still detecting because the end point may be unvalid
-						_.directionCalc(_, _.mouse.clone());
-					}
-					break;
-				case 'rotating':
-					_.rotatingHandler(_);
-					break;
-				default:
-					return false;
-				}
+				Rubik.domEvents.onMouseMove(_);
 			}
 		});
 
+		//mousedown event
+		canvas.addEventListener( 'mousedown', function(event){
+			if(event.which === 1){
+				//only react to the left button
+				if(_.flag === 'idle')
+					//the cube is idle, start the interaction
+					_.pushClickedCube(_);
+			}
+		}, false);
 
+		//touch screen - touch start event
 		canvas.addEventListener( 'touchstart', function(event){
 			if ( event.touches.length === 1 ) {
 				event.preventDefault();
@@ -105,49 +84,14 @@ Rubik.interaction = {
 			}
 		});
 
-
-		//mousedown event
-		canvas.addEventListener( 'mousedown', function(event){
-			if(event.which === 1){
-				//only react to the left button
-				if(_.flag === 'idle')
-					//the cube is idle, start the interaction
-					_.pushClickedCube(_);
-			}
-		}, false);
-
 		//mouseup event
 		canvas.addEventListener( 'mouseup', function(event){
-			if(event.which === 1){
-				//only react to the left button
-				switch(_.flag){
-					case 'detecting':
-						//abort, when the flag is detecting
-						_.abortDetection(_);
-						break;
-					case 'rotating':
-						//check if it is a real rotation
-						_.checkRealRotation(_);
-						break;
-					default:
-						return false;
-				}
-			}
+			if(event.which === 1)
+				Rubik.domEvents.onMouseUp(_);
 		}, false);
 
 		canvas.addEventListener( 'touchend', function(event){
-			switch(_.flag){
-				case 'detecting':
-					//abort, when the flag is detecting
-					_.abortDetection(_);
-					break;
-				case 'rotating':
-					//check if it is a real rotation
-					_.checkRealRotation(_);
-					break;
-				default:
-					return false;
-			}
+			Rubik.domEvents.onMouseUp(_);
 		});
 	},
 
