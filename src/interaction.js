@@ -20,7 +20,7 @@ Rubik.interaction = {
 	//coordinates where the detection started
 	'startPoint' : null,
 	//the frames we want to spend on detecting direction
-	'maxDetectingFrame' : 5,
+	'maxDetectingFrame' : 4,
 	//the couter of frames during detection
 	'frameCounter' : 0,
 	//essential information for rotation

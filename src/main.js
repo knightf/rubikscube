@@ -32,7 +32,7 @@ Rubik.settings = {
 }
 
 //create a renderer
-Rubik.renderer = new THREE.WebGLRenderer();
+Rubik.renderer = new THREE.WebGLRenderer({ alpha: true });
 
 //create a scene
 Rubik.scene = new THREE.Scene();
@@ -116,8 +116,11 @@ Rubik.startRendering = function(renderer, camera, scene){
 
 	//set renderer up
 	renderer.setSize( rendererSettings.width , rendererSettings.height );
+	//bind the window resize event
+	window.addEventListener('resize', function(){ _.domEvents.onResize(camera, renderer) }, false);
+
 	//append the renderer to the webpage
-	document.body.appendChild(renderer.domElement);
+	document.getElementById('canvasWrapper').appendChild(renderer.domElement);
 
 	function render(){
 		requestAnimationFrame(render);
@@ -144,9 +147,6 @@ Rubik.deploy = function(){
 
 	//get camera ready in scene
 	_.setupCamera(camera);
-
-	//var axisHelper = new THREE.AxisHelper( 8 );
-	//scene.add( axisHelper );
 
 	//kickoff rendering
 	_.startRendering(renderer, camera, scene);
