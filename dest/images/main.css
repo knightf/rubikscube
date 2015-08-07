@@ -1,0 +1,59 @@
+
+body{
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+	background-color: #333;
+}
+
+.interfaceWrapper{
+	position: fixed;
+	width: 100%;
+	text-align: center;
+	color: white;
+	font-family: 'Open Sans Condensed', sans-serif;
+	top: 5%;
+}
+
+.interfaceWrapper > h1,
+.interfaceWrapper > h2{
+	font-weight: 300;
+	margin: 0;
+	padding: 0;
+}
+
+.interfaceWrapper > h1{
+	font-size: 8vmin;
+}
+
+.interfaceWrapper > h2{
+	font-size: 4vmin;
+}
+
+.rotateButton{
+	position: fixed;
+	width: 40px;
+	width: 5vmax;
+	height: 40px;
+	height: 5vmax;
+	background-color: white;
+	border-radius: 999px;
+}
+
+.rotateButton:hover{
+	cursor: pointer;
+	background-color: #eee;
+}
+
+#rotateX{
+	left: 25%;
+	top: 25%;
+}
+
+#rotateY{
+	left: 50%;
+	margin-left: -20px;
+	margin-left: -2.5vmax;
+	bottom: 10%;
+}
+
