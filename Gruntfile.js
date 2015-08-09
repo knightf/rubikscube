@@ -2,6 +2,8 @@
 module.exports = function(grunt){
 	grunt.loadNpmTasks('grunt-wiredep');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-contrib-less');
+	grunt.loadNpmTasks('grunt-contrib-watch');
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
@@ -22,7 +24,42 @@ module.exports = function(grunt){
 				}
 			}
 		},
+
+		less: {
+			development: {
+				options: {
+					compress: false,
+					optimization: 2,
+				},
+				files: {
+					'./dest/images/main.css': './src/main.less'
+				}
+			}
+		},
+
+		watch:{
+			less: {
+				files: './src/main.less',
+				tasks: ['less'],
+			},
+			
+			uglify:{
+				files: './src/*.js',
+				tasks: ['uglify'],
+			},
+
+			liveload: {
+				options: {
+					livereload: true,
+				},
+				files: [
+					'./dest/images/main.css',
+					'./dest/rubik.lib.js',
+					'./dest/index.html',
+				],
+			}
+		}
 	});
 
-	grunt.registerTask('default');
+	grunt.registerTask('default', ['less', 'uglify', 'watch']);
 }

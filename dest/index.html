@@ -1,25 +1,41 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="UTF-8"/>
 		<title>Rubik's Cube</title>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=0.5,maximum-scale=2">
 		<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
 		<link rel="stylesheet" href="./images/main.css" type="text/css">
 	</head>
 	<body>
-		<div class="interfaceWrapper">
+		<header class="interfaceWrapper">
 			<h1>Rubic's Cube</h1>
 			<h2>small experiment with three.js</h2>
-		</div>
+		</header>
 
 		<div class="rotateButton" id="rotateX"></div>
 		<div class="rotateButton" id="rotateY"></div>
-		<div class="rotateButton" id="rotateY"></div>
+		<div class="rotateButton" id="rotateZ"></div>
+
+		<footer class="interfaceWrapper">
+			<a target="_blank" href="https://github.com/knightf/rubikscube">Github</a>
+		</footer>
 
 		<div id="canvasWrapper"></div>
 
 		<script src="./three.min.js"></script>
 		<script src="./rubik.lib.js"></script>
 		<script>Rubik.deploy();</script>
+		<script>
+			document.body.onload = function(){
+				var rotateX = document.getElementById('rotateX');
+				var rotateY = document.getElementById('rotateY');
+				var rotateZ = document.getElementById('rotateZ');
+
+				rotateX.onclick = function(){ Rubik.interface.setFlag('wholeX'); }
+				rotateY.onclick = function(){ Rubik.interface.setFlag('wholeY'); }
+				rotateZ.onclick = function(){ Rubik.interface.setFlag('wholeZ'); }
+			}
+		</script>
 	</body>
 </html>

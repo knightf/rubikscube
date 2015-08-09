@@ -1,0 +1,103 @@
+@mobileScreen: 800px;
+@fontColor: white;
+
+body{
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+	background-color: #333;
+}
+
+a{
+	text-decoration: none;
+	color: @fontColor;
+
+	&:focus,
+	&:active,
+	&:visited{
+		color: @fontColor;
+	}
+
+	&:hover{
+		color: #eee;
+	}
+}
+
+.interfaceWrapper{
+	position: fixed;
+	width: 100%;
+	text-align: center;
+	color: @fontColor;
+	font-family: 'Open Sans Condensed', sans-serif;
+
+	>h1, >h2{
+		font-weight: 300;
+		margin: 0;
+		padding: 0;
+	}
+
+	>h1{
+		font-size: 8vmin;
+	}
+
+	>h2{
+		font-size: 4vmin;
+	}
+}
+
+header{
+	top: 5%;
+}
+
+footer{
+	bottom: 0%;
+	font-size: 2vmin;
+
+	padding-bottom: 10px;
+}
+
+.rotateButton{
+	@media screen and (max-width: @mobileScreen){
+		width: 60px;
+		height: 60px;
+		margin-left: -30px;
+	}
+
+	position: fixed;
+	background-color: white;
+	border-radius: 999px;
+
+	width: 80px;
+	height: 80px;
+	margin-left: -40px;
+
+	&:hover{
+		cursor: pointer;
+		background-color: #eee;
+	}
+}
+
+#rotateX{
+	@media screen and (max-width: @mobileScreen){
+		left: 15%;
+		top: 20%;
+	}
+
+	left: 30%;
+	top: 25%;
+}
+
+#rotateY{
+	left: 50%;
+	bottom: 10%;
+}
+
+#rotateZ{
+	@media screen and (max-width: @mobileScreen){
+		left: 85%;
+		top: 20%;
+	}
+
+	left: 70%;
+	top: 25%;
+}

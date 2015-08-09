@@ -1,59 +1,88 @@
-
-body{
-	padding: 0;
-	margin: 0;
-	overflow: hidden;
-	background-color: #333;
+body {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background-color: #333;
 }
-
-.interfaceWrapper{
-	position: fixed;
-	width: 100%;
-	text-align: center;
-	color: white;
-	font-family: 'Open Sans Condensed', sans-serif;
-	top: 5%;
+a {
+  text-decoration: none;
+  color: white;
 }
-
+a:focus,
+a:active,
+a:visited {
+  color: white;
+}
+a:hover {
+  color: #eee;
+}
+.interfaceWrapper {
+  position: fixed;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-family: 'Open Sans Condensed', sans-serif;
+}
 .interfaceWrapper > h1,
-.interfaceWrapper > h2{
-	font-weight: 300;
-	margin: 0;
-	padding: 0;
+.interfaceWrapper > h2 {
+  font-weight: 300;
+  margin: 0;
+  padding: 0;
 }
-
-.interfaceWrapper > h1{
-	font-size: 8vmin;
+.interfaceWrapper > h1 {
+  font-size: 8vmin;
 }
-
-.interfaceWrapper > h2{
-	font-size: 4vmin;
+.interfaceWrapper > h2 {
+  font-size: 4vmin;
 }
-
-.rotateButton{
-	position: fixed;
-	width: 40px;
-	width: 5vmax;
-	height: 40px;
-	height: 5vmax;
-	background-color: white;
-	border-radius: 999px;
+header {
+  top: 5%;
 }
-
-.rotateButton:hover{
-	cursor: pointer;
-	background-color: #eee;
+footer {
+  bottom: 0%;
+  font-size: 2vmin;
+  padding-bottom: 10px;
 }
-
-#rotateX{
-	left: 25%;
-	top: 25%;
+.rotateButton {
+  position: fixed;
+  background-color: white;
+  border-radius: 999px;
+  width: 80px;
+  height: 80px;
+  margin-left: -40px;
 }
-
-#rotateY{
-	left: 50%;
-	margin-left: -20px;
-	margin-left: -2.5vmax;
-	bottom: 10%;
+@media screen and (max-width: 800px) {
+  .rotateButton {
+    width: 60px;
+    height: 60px;
+    margin-left: -30px;
+  }
 }
-
+.rotateButton:hover {
+  cursor: pointer;
+  background-color: #eee;
+}
+#rotateX {
+  left: 30%;
+  top: 25%;
+}
+@media screen and (max-width: 800px) {
+  #rotateX {
+    left: 15%;
+    top: 20%;
+  }
+}
+#rotateY {
+  left: 50%;
+  bottom: 10%;
+}
+#rotateZ {
+  left: 70%;
+  top: 25%;
+}
+@media screen and (max-width: 800px) {
+  #rotateZ {
+    left: 85%;
+    top: 20%;
+  }
+}
