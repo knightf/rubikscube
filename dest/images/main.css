@@ -47,8 +47,10 @@ footer {
   position: fixed;
   background-color: white;
   border-radius: 999px;
+  text-align: center;
   width: 80px;
   height: 80px;
+  line-height: 80px;
   margin-left: -40px;
 }
 @media screen and (max-width: 800px) {
@@ -56,11 +58,15 @@ footer {
     width: 60px;
     height: 60px;
     margin-left: -30px;
+    line-height: 60px;
   }
 }
 .rotateButton:hover {
   cursor: pointer;
   background-color: #eee;
+}
+.rotateButton > img {
+  vertical-align: middle;
 }
 #rotateX {
   left: 30%;
